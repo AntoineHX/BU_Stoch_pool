@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .sconv2davg import SConv2dAvg
+from .stoch import SConv2dAvg
 
 class BasicBlock(nn.Module):
     expansion = 1
