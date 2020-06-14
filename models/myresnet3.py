@@ -119,7 +119,7 @@ class ResNet(nn.Module):
     def forward(self, x , stoch = False):
         #if self.training==False:
         #    stoch=False
-        print(stoch)
+        #print(stoch)
         # self.layer1.stoch=stoch
         # self.layer2.stoch=stoch
         # self.layer3.stoch=stoch
