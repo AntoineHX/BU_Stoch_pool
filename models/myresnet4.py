@@ -26,7 +26,7 @@ class SAvg_Pool2d(nn.Module):
         out = savg_pool2d(x, self.stride, mode = self.mode,ceil_mode = self.ceil_mode)
         return out
 
-stochmode = 'sim'#'sim'#'stride''stoch'''
+stochmode = 'stoch'#'sim'#'stride''stoch'''
 finalstochpool = True
 simmode = 'sbc'
 
