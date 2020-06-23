@@ -1,0 +1,17 @@
+Namespace(batch=128, dataset='CIFAR10', epochs=10, lr=0.05, net='MyLeNetMatNormalNoceil', postfix='_noCrop', res_folder='res/', resume=False, scheduler='cosine', stoch=False, warmup_ep=5, warmup_mul=0)
+==> Preparing data..
+==> Building model..
+==> Training model..
+---------
+
+Epoch: 0
+Acc : 36.21 / 49.24
+Loss : 1.72 / 1.42
+Time: 247.9577119993046
+---------
+
+Epoch: 1
+Acc : 52.45 / 53.66
+Loss : 1.32 / 1.29
+Time: 496.28596297279
+slurmstepd: error: *** JOB 44492595 ON cdr294 CANCELLED AT 2020-06-23T01:58:42 ***

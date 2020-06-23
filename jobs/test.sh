@@ -4,7 +4,7 @@
 #SBATCH --mem=32000M  #32000M       # Memory proportional to CPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --account=def-mpederso
 #SBATCH --time=1:00:00
-#SBATCH --job-name=MyResNet18
+#SBATCH --job-name=MyLeNetMatNormalNoceil
 #SBATCH --output=log/%x-%j.out
 #SBATCH --mail-user=harle.collette.antoine@gmail.com
 #SBATCH --mail-type=END
@@ -12,15 +12,15 @@
 
 
 # Setup
-source ~/dataug/bin/activate
+source ~/stoch_pool/bin/activate
 
 #Execute
 # echo $(pwd) = /home/antoh/projects/def-mpederso/antoh/stoch/jobs
 cd ../
 
 time python main.py \
-    -n MyResNet18 \
+    -n MyLeNetMatNormalNoceil \
     -ep 10 \
     -sc cosine \
     -lr 5e-2 \
-    -pf _noCrop_Stoch
+    -pf _noCrop

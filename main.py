@@ -49,7 +49,7 @@ checkpoint=False
 
 # Data
 print('==> Preparing data..')
-dataroot="./data"
+dataroot="~/scratch/data" #"./data"
 download_data=False
 transform_train = [
     # transforms.RandomCrop(32, padding=4),
