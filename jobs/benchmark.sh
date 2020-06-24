@@ -4,7 +4,7 @@
 #SBATCH --mem=32000M  #32000M       # Memory proportional to CPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --account=def-mpederso
 #SBATCH --time=10:00:00
-#SBATCH --job-name=Benchmark-MyLeNetMatNormalNoceil
+#SBATCH --job-name=Benchmark-MyLeNetMatStochBUNoceil
 #SBATCH --output=log/%x-%j.out
 #SBATCH --mail-user=harle.collette.antoine@gmail.com
 #SBATCH --mail-type=END
@@ -20,10 +20,10 @@ source ~/virtual_env/stoch_pool/bin/activate
 cd ../
 
 time python main.py \
-    -n MyLeNetMatNormalNoceil \
-    -ep 100 \
+    -n MyLeNetMatStochBUNoceil \
+    -ep 50 \
     -sc cosine \
     -lr 5e-2 \
-    -rf '../res/benchmark_NoCeil/' \
-    -k 1 \
-    -pf __k1_$SLURM_ARRAY_TASK_ID
+    -rf 'res/benchmark_NoCeil/' \
+    -k 4 \
+    -pf __k4_$SLURM_ARRAY_TASK_ID

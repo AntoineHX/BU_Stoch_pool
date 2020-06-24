@@ -38,7 +38,9 @@ parser.add_argument('--res_folder', '-rf', dest='res_folder', default='res/',
 parser.add_argument('--postfix', '-pf', dest='postfix', default='',
                     help='Results postfix')    
 parser.add_argument('--dataset', '-d', dest='dataset', default='CIFAR10',
-                    help='Dataset')                  
+                    help='Dataset')   
+parser.add_argument('-k', dest='k', default=3, type=int,
+                    help='K for noCeil')               
 args = parser.parse_args()
 print(args)
 
@@ -115,7 +117,10 @@ print('==> Building model..')
 #storchastic Bottom-UP like fig.3 paper
 # net = MyLeNetMatStochBU() # 10.5s - 45.3%  #1.3GB
 
-net=globals()[args.net]()
+try:
+    net=globals()[args.net](k=args.k) #NoCeil nets
+except:
+    net=globals()[args.net]()
 #print(net)
 net = net.to(device)
 if device == 'cuda':

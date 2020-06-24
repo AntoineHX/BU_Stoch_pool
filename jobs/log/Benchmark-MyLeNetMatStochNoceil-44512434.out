@@ -1,0 +1,73 @@
+Namespace(batch=128, dataset='CIFAR10', epochs=50, k=3, lr=0.05, net='MyLeNetMatStochNoceil', postfix='__k3_2', res_folder='res/benchmark_NoCeil/', resume=False, scheduler='cosine', stoch=False, warmup_ep=5, warmup_mul=0)
+==> Preparing data..
+==> Building model..
+==> Training model..
+---------
+
+Epoch: 0
+Acc : 26.23 / 24.77
+Loss : 1.96 / 1.95
+Time: 88.89952981937677
+---------
+
+Epoch: 5
+Acc : 49.19 / 37.63
+Loss : 1.41 / 1.69
+Time: 533.3709430936724
+---------
+
+Epoch: 10
+Acc : 56.72 / 39.58
+Loss : 1.21 / 1.61
+Time: 978.0299946693704
+---------
+
+Epoch: 15
+Acc : 60.20 / 37.36
+Loss : 1.11 / 1.73
+Time: 1422.6836077561602
+---------
+
+Epoch: 20
+Acc : 63.17 / 37.28
+Loss : 1.03 / 1.73
+Time: 1867.3761521866545
+---------
+
+Epoch: 25
+Acc : 66.56 / 41.14
+Loss : 0.95 / 1.61
+Time: 2311.9993200674653
+---------
+
+Epoch: 30
+Acc : 68.86 / 40.12
+Loss : 0.89 / 1.72
+Time: 2756.85310437344
+---------
+
+Epoch: 35
+Acc : 71.20 / 45.03
+Loss : 0.82 / 1.60
+Time: 3201.5983270090073
+---------
+
+Epoch: 40
+Acc : 73.10 / 43.67
+Loss : 0.77 / 1.62
+Time: 3646.298190155998
+---------
+
+Epoch: 45
+Acc : 75.00 / 45.30
+Loss : 0.72 / 1.58
+Time: 4091.1723202215508
+---------
+Best Acc : 48.57
+Training time (min): 74.11512494976633
+Log :" res/benchmark_NoCeil/log/MyLeNetMatStochNoceil-50epochs__k3_2.json " saved !
+Plot :" res/benchmark_NoCeil/MyLeNetMatStochNoceil-50epochs__k3_2 " saved !
+
+real	74m20.018s
+user	77m49.963s
+sys	24m34.997s
