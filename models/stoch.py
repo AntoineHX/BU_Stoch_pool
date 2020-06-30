@@ -91,13 +91,71 @@ class SConv2dAvg(nn.Module):
 
         if stride==1 or mask[0,0]==-1:# in case of no mask and stride==1 
             out = out_unf.view(batch_size,out_channels,out_h,out_w) #Fold
-            if stoch==False: #this is done outside for more clarity
-                out = F.avg_pool2d(out,self.stride,ceil_mode=True)
+            #if stoch==False: #this is done outside for more clarity
+            #    out = F.avg_pool2d(out,self.stride,ceil_mode=False)
+                #print(self.stride)
         else:#in case of mask
             out = torch.zeros(batch_size, out_channels,out_h,out_w,device=device)
             #out = torch.gather(out.view(batch_size,in_channels*kh*kw,afterconv_h*afterconv_w),2,index.view(batch_size,in_channels*kh*kw,index.shape[2])).view(batch_size,in_channels*kh*kw,index.shape[2])
             out[:,:,mask>0] = out_unf
             #out.masked_scatter_(mask>0, out_unf)
+        return out        
+
+    def forward_slow(self, input, selh=-torch.ones(1,1), selw=-torch.ones(1,1), mask=-torch.ones(1,1),stoch=True,stride=-1):
+        device=input.device
+        if stride==-1:
+            stride = self.stride #if stride not defined use self.stride
+        if stoch==False:
+            stride=1 #test with real average pooling
+        batch_size, in_channels, in_h, in_w = input.shape
+        out_channels, in_channels, kh, kw =  self.weight.shape
+    
+        afterconv_h = in_h+2*self.padding-(kh-1) #size after conv
+        afterconv_w = in_w+2*self.padding-(kw-1)
+        if self.ceil_mode: #ceil_mode = talse default mode for strided conv
+            out_h = math.ceil(afterconv_h/stride)
+            out_w = math.ceil(afterconv_w/stride)
+        else: #ceil_mode = false default mode for pooling
+            out_h = math.floor(afterconv_h/stride)
+            out_w = math.floor(afterconv_w/stride)
+        unfold = torch.nn.Unfold(kernel_size=(kh, kw), dilation=self.dilation, padding=self.padding, stride=1)
+        inp_unf = unfold(input) #transform into a matrix (batch_size, in_channels*kh*kw,afterconv_h,afterconv_w)
+        if stride!=1: # if stride==1 there is no pooling
+            inp_unf = inp_unf.view(batch_size,in_channels*kh*kw,afterconv_h,afterconv_w)
+            if selh[0,0]==-1: # if not given sampled selection
+                #selction of where to sample for each pooling location
+                selh = torch.randint(stride,(out_h,out_w), device=device)
+                selw = torch.randint(stride,(out_h,out_w), device=device)
+                
+                resth = (out_h*stride)-afterconv_h
+                restw = (out_w*stride)-afterconv_w                
+                if resth!=0 and self.ceil_mode: #in case of ceil_mode need to select only the good locations for the last regions
+                    selh[-1,:]=selh[-1,:]%(stride-resth);selh[:,-1]=selh[:,-1]%(stride-restw)
+                    selw[-1,:]=selw[-1,:]%(stride-resth);selw[:,-1]=selw[:,-1]%(stride-restw)
+            #the postion should be global by adding range...
+            rng_h = selh + torch.arange(0,out_h*stride,stride,device=device).view(-1,1)
+            rng_w = selw + torch.arange(0,out_w*stride,stride,device=device)
+           
+            if mask[0,0]==-1:# in case of not given mask use only sampled selection
+                inp_unf = inp_unf[:,:,rng_h,rng_w].view(batch_size,in_channels*kh*kw,-1)
+            else:#in case of a valid mask use selection only on the mask locations
+                inp_unf = inp_unf[:,:,rng_h[mask>0],rng_w[mask>0]]
+
+        #Matrix mul
+        if self.bias is None:
+            out_unf = inp_unf.transpose(1, 2).matmul(self.weight.view(self.weight.size(0), -1).t()).transpose(1, 2)
+            #out_unf = oe.contract('bji,kj->bki',inp_unf,self.weight.view(self.weight.size(0), -1),backend='torch')
+        else:
+            #out_unf = oe.contract('bji,kj->bki',inp_unf,self.weight.view(self.weight.size(0), -1),backend='torch')+self.bias.view(1,-1,1)
+            out_unf = (inp_unf.transpose(1, 2).matmul(self.weight.view(self.weight.size(0), -1).t()) + self.bias).transpose(1, 2)
+
+        if stride==1 or mask[0,0]==-1:# in case of no mask and stride==1 
+            out = out_unf.view(batch_size,out_channels,out_h,out_w) #Fold
+            #if stoch==False: #this is done outside for more clarity
+            #    out = F.avg_pool2d(out,self.stride,ceil_mode=self.ceil_mode)
+        else:#in case of mask
+            out = torch.zeros(batch_size, out_channels,out_h,out_w,device=device)
+            out[:,:,mask>0] = out_unf
         return out        
 
        
@@ -164,64 +222,6 @@ class SConv2dAvg(nn.Module):
             out_unf = oe.contract('bji,kj->bki',inp_unf,self.weight.view(self.weight.size(0), -1),backend='torch')+self.bias.view(1,-1,1)#still slow
             #self.flt = self.weight.view(self.weight.size(0), -1).t() 
             #out_unf = (inp_unf.transpose(1, 2).matmul(self.flt) + self.bias).transpose(1, 2)
-
-        if stride==1 or mask[0,0]==-1:# in case of no mask and stride==1 
-            out = out_unf.view(batch_size,out_channels,out_h,out_w) #Fold
-            if stoch==False: #this is done outside for more clarity
-                out = F.avg_pool2d(out,self.stride,ceil_mode=True)
-        else:#in case of mask
-            out = torch.zeros(batch_size, out_channels,out_h,out_w,device=device)
-            out[:,:,mask>0] = out_unf
-        return out        
-
-
-    def forward_slow(self, input, selh=-torch.ones(1,1), selw=-torch.ones(1,1), mask=-torch.ones(1,1),stoch=True,stride=-1):
-        device=input.device
-        if stride==-1:
-            stride = self.stride #if stride not defined use self.stride
-        if stoch==False:
-            stride=1 #test with real average pooling
-        batch_size, in_channels, in_h, in_w = input.shape
-        out_channels, in_channels, kh, kw =  self.weight.shape
-    
-        afterconv_h = in_h+2*self.padding-(kh-1) #size after conv
-        afterconv_w = in_w+2*self.padding-(kw-1)
-        if self.ceil_mode: #ceil_mode = talse default mode for strided conv
-            out_h = math.ceil(afterconv_h/stride)
-            out_w = math.ceil(afterconv_w/stride)
-        else: #ceil_mode = false default mode for pooling
-            out_h = math.floor(afterconv_h/stride)
-            out_w = math.floor(afterconv_w/stride)
-        unfold = torch.nn.Unfold(kernel_size=(kh, kw), dilation=self.dilation, padding=self.padding, stride=1)
-        inp_unf = unfold(input) #transform into a matrix (batch_size, in_channels*kh*kw,afterconv_h,afterconv_w)
-        if stride!=1: # if stride==1 there is no pooling
-            inp_unf = inp_unf.view(batch_size,in_channels*kh*kw,afterconv_h,afterconv_w)
-            if selh[0,0]==-1: # if not given sampled selection
-                #selction of where to sample for each pooling location
-                selh = torch.randint(stride,(out_h,out_w), device=device)
-                selw = torch.randint(stride,(out_h,out_w), device=device)
-                
-                resth = (out_h*stride)-afterconv_h
-                restw = (out_w*stride)-afterconv_w                
-                if resth!=0 and self.ceil_mode: #in case of ceil_mode need to select only the good locations for the last regions
-                    selh[-1,:]=selh[-1,:]%(stride-resth);selh[:,-1]=selh[:,-1]%(stride-restw)
-                    selw[-1,:]=selw[-1,:]%(stride-resth);selw[:,-1]=selw[:,-1]%(stride-restw)
-            #the postion should be global by adding range...
-            rng_h = selh + torch.arange(0,out_h*stride,stride,device=device).view(-1,1)
-            rng_w = selw + torch.arange(0,out_w*stride,stride,device=device)
-           
-            if mask[0,0]==-1:# in case of not given mask use only sampled selection
-                inp_unf = inp_unf[:,:,rng_h,rng_w].view(batch_size,in_channels*kh*kw,-1)
-            else:#in case of a valid mask use selection only on the mask locations
-                inp_unf = inp_unf[:,:,rng_h[mask>0],rng_w[mask>0]]
-
-        #Matrix mul
-        if self.bias is None:
-            #out_unf = inp_unf.transpose(1, 2).matmul(self.weight.view(self.weight.size(0), -1).t()).transpose(1, 2)
-            out_unf = oe.contract('bji,kj->bki',inp_unf,self.weight.view(self.weight.size(0), -1),backend='torch')
-        else:
-            out_unf = oe.contract('bji,kj->bki',inp_unf,self.weight.view(self.weight.size(0), -1),backend='torch')+self.bias.view(1,-1,1)
-            #out_unf = (inp_unf.transpose(1, 2).matmul(self.weight.view(self.weight.size(0), -1).t()) + self.bias).transpose(1, 2)
 
         if stride==1 or mask[0,0]==-1:# in case of no mask and stride==1 
             out = out_unf.view(batch_size,out_channels,out_h,out_w) #Fold
